@@ -6,8 +6,11 @@
 //
 
 import UIKit
+import CoreData
 
 class TaskViewController: UIViewController {
+    
+    private let context = (UIApplication.shared .delegate as! AppDelegate).persistentContainer.viewContext // доступ к контексту, который находися в AppDelegate. Теперь можно будет сохранять данные из этого контекста в постоянное хранилище
     
     private lazy var taskTextField: UITextField = {
         let textFitld = UITextField()
@@ -27,7 +30,7 @@ class TaskViewController: UIViewController {
                 alpha: 194/255),
             andTitle: "Save task",
             andAction: UIAction {_ in
-                self.dismiss(animated: true)
+                self.save()
             })
     }()
     
@@ -89,5 +92,28 @@ class TaskViewController: UIViewController {
         buttonConfiguration.attributedTitle = AttributedString(title, attributes: atributes)
         
         return UIButton(configuration: buttonConfiguration, primaryAction: action)
+    }
+    
+    private func save () {
+        // ТАК ДЕЛАЕМ ТОЛЬКО В ТОМ СЛУЧАЕ, ЕСЛИ В МОДЕЛИ ЕСТЬ КАКИЕ-ТО ВЛОЖЕННОСТИ, ВЗАИМОСВЯЗИ
+//        guard let entityDescription = NSEntityDescription.entity(forEntityName: "Task", in: context) else {return}
+//        guard let task = NSManagedObject(entity: entityDescription, insertInto: context) as? Task else {return} // создаем экземпляр класса модели
+        
+        // ДЛЯ ПРОСТОЙ МОДЕЛИ
+        let task = Task(context: context)
+        
+        task.name = taskTextField.text
+        
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+              
+                let nserror = error as NSError
+                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+            }
+        }
+        
+        dismiss(animated: true)
     }
 }

@@ -6,14 +6,28 @@
 //
 
 import UIKit
+import CoreData
 
 class TaskListViewController: UITableViewController {
+    
+    private let context = (UIApplication.shared .delegate as! AppDelegate).persistentContainer.viewContext
+    
+    let cellID = "task"
+    private var taskList: [Task] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellID)
         setupNavigatoinBar()
+        fetchData()
 
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        fetchData()
+        tableView.reloadData()
     }
     
     private func setupNavigatoinBar() {
@@ -45,9 +59,37 @@ class TaskListViewController: UITableViewController {
     @objc private func addNewTask() {
         
         let newTaskVC = TaskViewController() // создаем экземпляр класса, на который будем переходить
+        newTaskVC.modalPresentationStyle = .fullScreen // делаем экран, на который переходим, на весь экран
         present(newTaskVC, animated: true) // указываем куда будем переходить
+       
+    }
+    
+    private func fetchData() {
+        let fetchRequest = Task.fetchRequest() // запрос для базы данных чтобы выбрать из нее все объекты с типом Task
+        do {
+            taskList = try context.fetch(fetchRequest) // присваиваем массиву массив экземпляров модели
+            
+        } catch {
+            print("Faild to fetch data", error)
+        }
     }
     
 }
 
+extension TaskListViewController {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        taskList.count
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellID, for: indexPath)
+        let task = taskList[indexPath.row]
+        
+        var content = cell.defaultContentConfiguration()
+        content.text = task.name
+        cell.contentConfiguration = content
+        return cell
+    }
+    
+}
 
