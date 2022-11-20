@@ -21,7 +21,7 @@ class TaskListViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellID)
         setupNavigatoinBar()
         fetchData()
-
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -57,11 +57,8 @@ class TaskListViewController: UITableViewController {
     }
     
     @objc private func addNewTask() {
+        showAlert(with: "New Task", and: "What do you want to do?")
         
-        let newTaskVC = TaskViewController() // создаем экземпляр класса, на который будем переходить
-        newTaskVC.modalPresentationStyle = .fullScreen // делаем экран, на который переходим, на весь экран
-        present(newTaskVC, animated: true) // указываем куда будем переходить
-       
     }
     
     private func fetchData() {
@@ -71,6 +68,41 @@ class TaskListViewController: UITableViewController {
             
         } catch {
             print("Faild to fetch data", error)
+        }
+    }
+    
+    private func showAlert(with title: String, and message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        
+        // интегрируем два пользовательских действия и одно текстовое поле в AlertController
+        
+        let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
+            guard let task = alert.textFields?.first?.text, !task.isEmpty else {return}
+            self.save(task)
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
+        alert.addAction(saveAction)
+        alert.addAction(cancelAction)
+        alert.addTextField { textField in // добавляем текстовое поля в alert
+            textField.placeholder = "New task" // в completion происходит настройка текстового поля
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func save(_ taskName: String) {
+        let task = Task(context: context)
+        task.name = taskName
+        taskList.append(task)
+        
+        // анимированное добавление ячейки при сохранении новой задачи
+        let cellIndex = IndexPath(row: taskList.count - 1, section: 0)
+        tableView.insertRows(at: [cellIndex], with: .automatic)
+        
+        do {
+            try context.save()
+        } catch {
+            print(error)
         }
     }
     
